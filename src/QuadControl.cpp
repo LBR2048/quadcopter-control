@@ -69,11 +69,11 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
   // You'll need the arm length parameter L, and the drag/thrust ratio kappa
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
-  cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
-  cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
-  cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
-  cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
+    collThrustCmd = mass * 9.81f;
+    cmd.desiredThrustsN[0] = (collThrustCmd + momentCmd.x/L + momentCmd.y/L + momentCmd.z/kappa) / 4.f; // front left
+    cmd.desiredThrustsN[1] = (collThrustCmd - momentCmd.x/L + momentCmd.y/L - momentCmd.z/kappa) / 4.f; // front right
+    cmd.desiredThrustsN[2] = (collThrustCmd + momentCmd.x/L - momentCmd.y/L - momentCmd.z/kappa) / 4.f; // rear left
+    cmd.desiredThrustsN[3] = (collThrustCmd - momentCmd.x/L - momentCmd.y/L + momentCmd.z/kappa) / 4.f; // rear right
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -97,9 +97,12 @@ V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
   V3F momentCmd;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
-  
-
+    V3F I = V3F(Ixx, Iyy, Izz);
+    V3F pqrError = pqrCmd - pqr;
+    V3F alfa = kpPQR * pqrError;
+    V3F tau = I * alfa;
+    
+    momentCmd = tau;
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return momentCmd;
@@ -124,12 +127,31 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
   //  - you'll need the roll/pitch gain kpBank
   //  - collThrustCmd is a force in Newtons! You'll likely want to convert it to acceleration first
 
-  V3F pqrCmd;
   Mat3x3F R = attitude.RotationMatrix_IwrtB();
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+    
+    V3F pqrCmd;
+    float c_d = collThrustCmd/mass;
 
-
+    if (collThrustCmd > 0) {
+        
+        float x = accelCmd.x/c_d;
+        float target_R13 = std::max(-maxTiltAngle, std::min(x, maxTiltAngle));
+        
+        float y = accelCmd.y/c_d;
+        float target_R23 = std::max(-maxTiltAngle, std::min(y, maxTiltAngle));
+        
+        float p_cmd = (1/R(2, 2)) * (-R(1, 0) * kpBank * (R(0, 2)-target_R13) + R(0, 0) * kpBank * (R(1, 2)-target_R23));
+        float q_cmd = (1/R(2, 2)) * (-R(1, 1) * kpBank * (R(0, 2)-target_R13) + R(0, 0) * kpBank * (R(1, 2)-target_R23));
+        
+        pqrCmd.x = p_cmd;
+        pqrCmd.y = q_cmd;
+        pqrCmd.z = 0.f;
+                
+    } else {
+        pqrCmd = V3F(0.f, 0.f, 0.f);
+    }
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
