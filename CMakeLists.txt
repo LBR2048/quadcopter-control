@@ -4,6 +4,9 @@ project(CPPSim)
 set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++0x")
 
+# Tell cmake where Qt is located
+set(Qt5_DIR "/usr/local/opt/qt/lib/cmake/Qt5")
+
 include_directories(src)
 include_directories(lib)
 
@@ -26,9 +29,10 @@ FILE(GLOB HEADERS
         lib/mavlink/*.h
         lib/mavlink/common/*.h)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Core Network Widgets REQUIRED)
+#find_package(Qt5Core REQUIRED)
+#find_package(Qt5Network REQUIRED)
+#find_package(Qt5Widgets REQUIRED)
 
 # /System/Library/Frameworks/GLUT.framework
 find_package(GLUT REQUIRED)
