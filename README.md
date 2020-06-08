@@ -59,22 +59,18 @@ const auto c = static_cast<const float>((u1Bar - CONST_GRAVITY) / R(2, 2));
 thrust = - mass * (u1Bar - (float)CONST_GRAVITY) / R(2,2);
 ```  
 ## Implement lateral position control in C++.
-A P controller is used to calculate the required velocity to keep a desired position. 
-```
-V3F posErr = posCmd - pos;
-velCmd += kpPosXY * posErr;
-```
-This velocity is then restricted due to hardware limitations
+First the velocity is restricted due to hardware limitations
 ```
 velCmd.x = CONSTRAIN(velCmd.x, -maxSpeedXY, maxSpeedXY);
-velCmd.y = CONSTRAIN(velCmd.y, -maxSpeedXY, maxSpeedXY);
+velCmd.y = CONSTRAIN(velCmd.y, -maxSpeedXY, maxSpeedXY); 
 ```
-A P controller is used to calculate the required acceleration to keep the required velocity from above. 
+A PD controller is used to calculate the required acceleration to keep the desired position.
 ```
+V3F posErr = posCmd - pos;
 V3F velErr = velCmd - vel;
-accelCmd += kpVelXY * velErr;
+accelCmd = kpPosXY * posErr + kpVelXY * velErr + accelCmd;
 ```
-Finally this acceleration also has to be limited due to hardware limitations
+Finally this acceleration also has to be restricted due to hardware limitations
 ```
 accelCmd.x = CONSTRAIN(accelCmd.x, -maxAccelXY, maxAccelXY);
 accelCmd.y = CONSTRAIN(accelCmd.y, -maxAccelXY, maxAccelXY);

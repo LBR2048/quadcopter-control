@@ -246,23 +246,18 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  // Velocity command
-  V3F posErr = posCmd - pos;
-  velCmd += kpPosXY * posErr;
-
   // Limit velocity command
   velCmd.x = CONSTRAIN(velCmd.x, -maxSpeedXY, maxSpeedXY);
   velCmd.y = CONSTRAIN(velCmd.y, -maxSpeedXY, maxSpeedXY);
 
   // Acceleration command
+  V3F posErr = posCmd - pos;
   V3F velErr = velCmd - vel;
-  accelCmd += kpVelXY * velErr;
+  accelCmd = kpPosXY * posErr + kpVelXY * velErr + accelCmd;
 
   // Limit acceleration command
   accelCmd.x = CONSTRAIN(accelCmd.x, -maxAccelXY, maxAccelXY);
   accelCmd.y = CONSTRAIN(accelCmd.y, -maxAccelXY, maxAccelXY);
-
-  accelCmd.z = 0.f;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
