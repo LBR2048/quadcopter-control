@@ -38,29 +38,24 @@ float b_y_err = b_y_c - b_y_a;
 float b_y_c_dot = kpBank * b_y_err;
 ```
 ## Implement altitude controller in C++.
-A PI controller is used to calculate the required velocity to keep the desired altitude
+First the required velocity has to be restricted due to hardware limitations.
 ```
-float posZErr = posZCmd - posZ;
-float p = kpPosZ * posZErr;
+  velZCmd = CONSTRAIN(velZCmd, -maxAscentRate, maxDescentRate);
+```
+A PID controller is used to calculate the required acceleration to keep the desired altitude
+```
+const float posZErr = posZCmd - posZ;
+const float velZErr = velZCmd - velZ;
 
+const float p = kpPosZ * posZErr;
 integratedAltitudeError += posZErr * dt;
-float i = KiPosZ * integratedAltitudeError;
-
-velZCmd = p + i + velZCmd;
-```
-The required velocity is then restricted due to the drone ascent rate and descent rate limitations.
-```
-velZCmd = CONSTRAIN(velZCmd, -maxDescentRate, maxAscentRate);
-```
-A D controller is used to calculate the required rotational acceleration for each axis to maintain the required velocity from above.
-```
-float velZErr = velZCmd - velZ;
-float d = kpVelZ * velZErr;
-
-float u1Bar = d + accelZCmd;
+const float i = KiPosZ * integratedAltitudeError;
+const float d = kpVelZ * velZErr;
+const float u1Bar = p + i + d + accelZCmd;
 ```
 Finally the required thrust is calculated taking into account the required rotational acceleration as well the drone's mass and yaw.
 ```
+const auto c = static_cast<const float>((u1Bar - CONST_GRAVITY) / R(2, 2));
 thrust = - mass * (u1Bar - (float)CONST_GRAVITY) / R(2,2);
 ```  
 ## Implement lateral position control in C++.

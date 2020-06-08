@@ -194,21 +194,21 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
   float thrust = 0;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-    
-  float posZErr = posZCmd - posZ;
-  float p = kpPosZ * posZErr;
-  integratedAltitudeError += posZErr * dt;
-  float i = KiPosZ * integratedAltitudeError;
-  velZCmd = p + i + velZCmd;
 
   // Limit the ascent/descent rate
-  velZCmd = CONSTRAIN(velZCmd, -maxDescentRate, maxAscentRate);
+  velZCmd = CONSTRAIN(velZCmd, -maxAscentRate, maxDescentRate);
 
-  float velZErr = velZCmd - velZ;
-  float d = kpVelZ * velZErr;
-  float u1Bar = d + accelZCmd;
+  const float posZErr = posZCmd - posZ;
+  const float velZErr = velZCmd - velZ;
 
-  thrust = - mass * (u1Bar - (float)CONST_GRAVITY) / R(2,2);
+  const float p = kpPosZ * posZErr;
+  integratedAltitudeError += posZErr * dt;
+  const float i = KiPosZ * integratedAltitudeError;
+  const float d = kpVelZ * velZErr;
+  const float u1Bar = p + i + d + accelZCmd;
+
+  const auto c = static_cast<const float>((u1Bar - CONST_GRAVITY) / R(2, 2));
+  thrust = - mass * c;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
